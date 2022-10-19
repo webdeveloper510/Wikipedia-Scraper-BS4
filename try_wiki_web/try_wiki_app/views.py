@@ -44,15 +44,15 @@ def scrape_results_type(request ):
     for type_label in search_typeIndustry['label']:
         result_typeIndustry[type_label.get_text()] = search_typeIndustry['data'][type_count].get_text()
         type_count += 1
-    # if result_typeIndustry :
+    # if result_typeIndustry:
         # if result_typeIndustry['Title']:
         #     type_ind = result_typeIndustry['Title']
         #     print(result_typeIndustry['Title'])
 
-        # if result_typeIndustry['Industry'] :
-        #     type_ind = result_typeIndustry['Industry']
-        # else:
-        #     print('error')
+    if  result_typeIndustry['Industry']:
+         type_ind = result_typeIndustry['Industry']
+    else:
+       print("Not")
         # indus = [s for s in re.split("([A-Z][^A-Z]*)", type_ind ) if s]
         # value = " , ".join(indus)
         # store_industry = Industry.objects.create(industry_name = value)
@@ -104,9 +104,10 @@ def search_type_informatoinMeta(request  , soup):#, information_id):
         abc += 1
     for found_id in founded_type:
         if found_id in dictt.keys():
-            # print(dictt[found_id])
-            dictt[found_id] = dictt['Founded']
-    print(dictt.keys())
+            print(dictt[found_id])
+            # print(dictt[found_id]) 
+            dictt['Founded'] = dictt.pop(found_id)
+    print(dictt)
             
 
 
