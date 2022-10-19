@@ -7,7 +7,33 @@ from .models import *
 
 
 
-def scrape_results_type(request ):
+def gettypeIndustryAndSave(labels,data,keyword,model):
+  
+   
+
+    count = 0
+    name = ''
+    for label in labels:
+        if label.get_text()==keyword:
+         name = data[count].get_text()
+        count +=1
+         
+    id = None
+    if keyword=='Type' and name!='':
+        type = model()
+        type.type_name = name
+        type.save()
+        id = type.id
+    elif keyword=='Industry' and name!='':
+        industry = model()
+        industry.industry_name = name
+        industry.save()
+        id = industry.id
+
+    return id
+    
+
+def scrape_results_type( request ):
 
     res = requests.get( url='https://en.wikipedia.org/wiki/World_Health_Organization')
     res.encoding = "utf-8"
@@ -16,57 +42,25 @@ def scrape_results_type(request ):
     search_type={}
     search_type['label']= soup.select(".infobox-label")
     search_type['data']= soup.select(".infobox-data")
-    type_count = 0
-    result_type = {}
-    for type_label in search_type['label']:
-        result_type[type_label.get_text()] = search_type['data'][type_count].get_text()
-        type_count += 1
     
-    if result_type :
-        # if result_type['Born']:
-        #     type_data = 'Person'
-        if result_type['Type'] :
-            type_data = 'Organization'
-        else:
-            print('error')
-    #     store_type = Type.objects.create(type_name = type_data)
-    #     store_type.save()
-    # type_id = store_type.id
-    print("Type Store done")
+    typeId = gettypeIndustryAndSave(search_type['label'],search_type['data'],'Type',Type)
+    industryId = gettypeIndustryAndSave(search_type['label'],search_type['data'],'Industry',Industry)
+    scrape_results_information(request,soup,typeId,industryId)
 
-#################INDUSTRY PARTY #################
+    print("typeId===================",typeId)
+    print("industryId===================",industryId)
+    return
+    
+    
 
-    search_typeIndustry = {}
-    search_typeIndustry['label']= soup.select(".infobox-label")
-    search_typeIndustry['data']= soup.select(".infobox-data")
-    type_count = 0
-    result_typeIndustry = {}
-    for type_label in search_typeIndustry['label']:
-        result_typeIndustry[type_label.get_text()] = search_typeIndustry['data'][type_count].get_text()
-        type_count += 1
-    # if result_typeIndustry:
-        # if result_typeIndustry['Title']:
-        #     type_ind = result_typeIndustry['Title']
-        #     print(result_typeIndustry['Title'])
-
-    if  result_typeIndustry['Industry']:
-         type_ind = result_typeIndustry['Industry']
-    else:
-       print("Not")
-        # indus = [s for s in re.split("([A-Z][^A-Z]*)", type_ind ) if s]
-        # value = " , ".join(indus)
-        # store_industry = Industry.objects.create(industry_name = value)
-        # store_industry.save()
-        # industry_id = store_industry.id
-        # print(type_id)
-    scrape_results_information(request , soup)# , type_id , industry_id)
-    print("Industry Store done")
+#################INDUSTRY PART #################
+    
     return render(request , 'results.html')# , context)
 
 
 
 
-def scrape_results_information(request , soup ):#,type_id , industry_id):
+def scrape_results_information(request , soup ,type_id=None , industry_id=None):
 ####################  NAME AND IMAGE ############################
     name = {}
     name['Name'] = soup.select("#firstHeading > span ")
@@ -79,18 +73,23 @@ def scrape_results_information(request , soup ):#,type_id , industry_id):
         src_img = cov_img["src"]
 ####################  OTHER INFORMATION DATA #####################
 
-    # type_id2 = Type.objects.get(id=type_id)
+    type = None if type_id is None else Type.objects.get(id=type_id)
+    industry = None if industry_id is None else Industry.objects.get(id=industry_id)
     # industry_id2 = Industry.objects.get(id=industry_id)
-    # store_information = Information.objects.create(name = name_of.get_text() , image = src_img  ,type_key = type_id2 , industry_key = industry_id2)
-    # store_information.save()
-    # information_id = store_information.id
-    search_type_informatoinMeta(request  , soup)# , information_id)
+    store_information = Information.objects.create(name = name_of.get_text() , image = src_img  ,type_key = type , industry_key = industry)
+    store_information.save()
+    information_id = store_information.id
+    search_type_informatoinMeta(request  , soup , information_id)
     print('Information Store Done')
 
     # context = {'result3' : dictt}
     # return render(request , 'results.html' , context)
 
-def search_type_informatoinMeta(request  , soup):#, information_id):
+
+
+
+
+def search_type_informatoinMeta(request  , soup, information_id):
 ################### INFORMATION DATA ####################
 
     dictuse = {}
@@ -104,17 +103,7 @@ def search_type_informatoinMeta(request  , soup):#, information_id):
         abc += 1
     for found_id in founded_type:
         if found_id in dictt.keys():
-            print(dictt[found_id])
-            # print(dictt[found_id]) 
             dictt['Founded'] = dictt.pop(found_id)
-    print(dictt)
-            
-
-
-
-
-
-
 #################### Other data #################################################
     dict3 = {}
     about = {}
@@ -143,9 +132,11 @@ def search_type_informatoinMeta(request  , soup):#, information_id):
                about[headingValue] += para.get_text()
             if foundH3:
                 about[headingValue3] += para.get_text()
-        # information_id2 = Information.objects.get(id=information_id)
-        # store_infoMeta = Info_Meta.objects.create(meta_key = about.keys() , meta_value = about.values() , info_key = information_id2)   
-        # store_infoMeta.save()
+        dict_dictt_about_keys = {'dictt_keys' :dictt.keys()  , 'about_keys' : about.keys()}
+        dict_dictt_about_values = {'dictt_values' :dictt.values()  , 'about_values' : about.values()}
+        information_id2 = Information.objects.get(id=information_id)
+        store_infoMeta = Info_Meta.objects.create(meta_key = dict_dictt_about_keys.values() , meta_value = dict_dictt_about_values.values() , info_key = information_id2)   
+        store_infoMeta.save()
     print('NInformation_META Store Done')
 
     # context = {'result4' : about}

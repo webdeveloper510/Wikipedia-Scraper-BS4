@@ -9,7 +9,7 @@ class Type(models.Model):
 
 
 class Industry(models.Model):
-    industry_name = models.TextField(max_length=255, blank=True)
+    industry_name = models.TextField(max_length=255, null=True)
 
 
 class Information(models.Model):
