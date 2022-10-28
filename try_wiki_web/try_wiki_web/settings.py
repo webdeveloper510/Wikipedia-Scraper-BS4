@@ -77,10 +77,10 @@ WSGI_APPLICATION = 'try_wiki_web.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'Wikipedia',
+        'NAME': 'wikipedia',
         'USER': 'root',
-        'PASSWORD': 'Yadav@2922',
-        'HOST': 'localhost',   # Or an IP Address that your DB is hosted on
+        'PASSWORD': '',
+        'HOST': '127.0.0.1',   # Or an IP Address that your DB is hosted on
         'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",

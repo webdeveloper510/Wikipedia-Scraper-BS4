@@ -1,9 +1,8 @@
 from bs4 import BeautifulSoup
-from django.shortcuts import render
 import requests
-import re
 from .models import *
-
+import pprint 
+pp = pprint.PrettyPrinter(indent=4)
 
 
 
@@ -35,7 +34,7 @@ def gettypeIndustryAndSave(labels,data,keyword,model):
 
 def scrape_results_type( request ):
 
-    res = requests.get( url='https://en.wikipedia.org/wiki/World_Health_Organization')
+    res = requests.get( url='https://en.wikipedia.org/wiki/Elon_Musk')
     res.encoding = "utf-8"
     soup = BeautifulSoup(res.text  , 'html.parser')
 
@@ -52,10 +51,6 @@ def scrape_results_type( request ):
     return
     
     
-
-#################INDUSTRY PART #################
-    
-    return render(request , 'results.html')# , context)
 
 
 
@@ -75,10 +70,10 @@ def scrape_results_information(request , soup ,type_id=None , industry_id=None):
 
     type = None if type_id is None else Type.objects.get(id=type_id)
     industry = None if industry_id is None else Industry.objects.get(id=industry_id)
-    # industry_id2 = Industry.objects.get(id=industry_id)
     store_information = Information.objects.create(name = name_of.get_text() , image = src_img  ,type_key = type , industry_key = industry)
     store_information.save()
     information_id = store_information.id
+    print()
     search_type_informatoinMeta(request  , soup , information_id)
     print('Information Store Done')
 
@@ -107,35 +102,58 @@ def search_type_informatoinMeta(request  , soup, information_id):
 #################### Other data #################################################
     dict3 = {}
     about = {}
-    dict3['Try'] = soup.select(".mw-parser-output >  h3 , h2 , p ")
+    dict3['Try'] = soup.select(".mw-parser-output >  h4 ,h3 , h2 , p ")
     asdf = dict3['Try']
     for para in asdf:
         if para.name == 'p':
             about['About'] = para.get_text()
-        if para.name=='h2' or para.name=='h3':
+
+        if para.name=='h2' or para.name=='h3' or para.name=='h4':
             break
     foundH2 = False
     foundH3 = False
+    foundH4 = False
     headingValue = ''
     headingValue3 = ''
+    headingValue4 = ''
     for para in asdf:
+        # h2
         if para.name=='h2':
             headingValue = para.get_text()
             about[headingValue] = ''
             foundH2 = True
+        #h3
         if para.name == 'h3':
             headingValue3 = para.get_text()
             about[headingValue3]  = ''
-            foundH3 = True            
-        if para.name == 'p':
+            foundH3 = True  
+
+        # h4
+        if para.name == 'h4':
+            headingValue4 = para.get_text()
+            about[headingValue4] = ''
+            foundH4 = True    
+        if para.name=='p':
             if foundH2:
-               about[headingValue] += para.get_text()
+                about[headingValue] += para.get_text()
             if foundH3:
                 about[headingValue3] += para.get_text()
-        dict_dictt_about_keys = {'dictt_keys' :dictt.keys()  , 'about_keys' : about.keys()}
-        dict_dictt_about_values = {'dictt_values' :dictt.values()  , 'about_values' : about.values()}
+            if foundH4:
+                about[headingValue4] += para.get_text() 
+    dict_dictt_about = {}
+    for dictt_k ,dictt_v in dictt.items():
+        dict_dictt_about[dictt_k] = dictt_v
+    for about_k ,about_v in about.items():
+        dict_dictt_about[about_k] = about_v
+    print(dict_dictt_about)
+    for ddk , ddv in dict_dictt_about.items():
+
+
+    # dict_dictt_about_keys = {'dictt_keys' :dictt.keys()  , 'about_keys' : about.keys()}
+    # # print(dict_dictt_about_keys.values())
+    # dict_dictt_about_values = {'dictt_values' :dictt.values()  , 'about_values' : about.values()}
         information_id2 = Information.objects.get(id=information_id)
-        store_infoMeta = Info_Meta.objects.create(meta_key = dict_dictt_about_keys.values() , meta_value = dict_dictt_about_values.values() , info_key = information_id2)   
+        store_infoMeta = Info_Meta.objects.create(meta_key = ddk, meta_value = ddv , info_key = information_id2)   
         store_infoMeta.save()
     print('NInformation_META Store Done')
 
