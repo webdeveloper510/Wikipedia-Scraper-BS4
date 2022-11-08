@@ -77,9 +77,9 @@ WSGI_APPLICATION = 'try_wiki_web.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'wikipedia',
+        'NAME': 'Wikipedia',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': '',#'Yadav@2922',
         'HOST': '127.0.0.1',   # Or an IP Address that your DB is hosted on
         'PORT': '3306',
         'OPTIONS': {
@@ -133,3 +133,10 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+FOUND_TYPE = ['Founded' , 'Formed' , 'Formation']
+
+ENTITY_WORDS = {
+    'Life' : ["Childhood"],
+    'Eduction' : ['Education' , 'Degree' , 'University' , 'School' , 'Student'],
+    'Organization' : ['ORG']
+}

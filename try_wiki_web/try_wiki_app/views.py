@@ -1,10 +1,17 @@
 from bs4 import BeautifulSoup
+from django.conf import settings
+from django.shortcuts import render
 import requests
 from .models import *
+import re
 import pprint 
 pp = pprint.PrettyPrinter(indent=4)
+import spacy
+nlp = spacy.load('en_core_web_sm')
 
+from django.conf import settings
 
+# function Called from main function for type and Industry
 
 def gettypeIndustryAndSave(labels,data,keyword,model):
   
@@ -31,6 +38,8 @@ def gettypeIndustryAndSave(labels,data,keyword,model):
 
     return id
     
+# Main Function
+
 
 def scrape_results_type( request ):
 
@@ -66,6 +75,7 @@ def scrape_results_information(request , soup ,type_id=None , industry_id=None):
     image['Image'] = soup.select("table.infobox a.image img[src]")
     for cov_img in image['Image']:
         src_img = cov_img["src"]
+
 ####################  OTHER INFORMATION DATA #####################
 
     type = None if type_id is None else Type.objects.get(id=type_id)
@@ -73,89 +83,163 @@ def scrape_results_information(request , soup ,type_id=None , industry_id=None):
     store_information = Information.objects.create(name = name_of.get_text() , image = src_img  ,type_key = type , industry_key = industry)
     store_information.save()
     information_id = store_information.id
-    print()
-    search_type_informatoinMeta(request  , soup , information_id)
+  
+    search_type_informationMeta(request  , soup , information_id)
     print('Information Store Done')
 
-    # context = {'result3' : dictt}
-    # return render(request , 'results.html' , context)
 
 
 
 
-
-def search_type_informatoinMeta(request  , soup, information_id):
+def search_type_informationMeta(request  , soup, information_id):
 ################### INFORMATION DATA ####################
 
     dictuse = {}
     dictuse['Diff'] = soup.select(".infobox-label")
     dictuse['Diss'] = soup.select(".infobox-data")
     abc = 0
-    founded_type = ['Founded' , 'Formed' , 'Formation']
     dictt={}
     for i in dictuse['Diff']:   
         dictt[i.get_text()]= dictuse['Diss'][abc].get_text()
         abc += 1
-    for found_id in founded_type:
+    for found_id in settings.FOUND_TYPE:
         if found_id in dictt.keys():
             dictt['Founded'] = dictt.pop(found_id)
+
 #################### Other data #################################################
+    linkdi = []
+    linkdict = {}
+    h2dict = {}
+    h3dict = {}
     dict3 = {}
+
     about = {}
-    dict3['Try'] = soup.select(".mw-parser-output >  h4 ,h3 , h2 , p ")
+
+
+    found2d = False
+    found3d = False
+    found4d = False
+
+    dict3['Try'] = soup.select(".mw-parser-output >  h4 , h3 , h2 , p , a[href]")
     asdf = dict3['Try']
+    key = ''
+    keyh2 = ''
+    keyh3 = ''
     for para in asdf:
-        if para.name == 'p':
-            about['About'] = para.get_text()
+        about['About'] = para.get_text()
 
         if para.name=='h2' or para.name=='h3' or para.name=='h4':
             break
-    foundH2 = False
-    foundH3 = False
-    foundH4 = False
-    headingValue = ''
-    headingValue3 = ''
-    headingValue4 = ''
+
+
     for para in asdf:
+
+
+        if  para.name=='h2' :
+            key = para.get_text()
+            h2dict[key] = {}
+            found2d= True
+        if para.name=='h3':
+            if found2d:
+                keyh2 = para.get_text()
+                h3dict[keyh2] = ''
+                h2dict[key][keyh2] = {}
+                found3d = True
+        if para.name=='h4':
+            if found3d:
+                keyh3 = para.get_text()
+                h2dict[key][keyh2][keyh3] = ''
+
+
+    print(h2dict)
+    information_id2 = Information.objects.get(id=information_id)
+
+    for i , m in h2dict.items():
+        for j , l in m.items():
+            store_infoMeta = Info_Meta.objects.create(keyh2 = i, valueh2 = '' , key_h3 =", ".join(m.keys()),key_h4 = ", ".join(l.keys()), info_key = information_id2)   
+            store_infoMeta.save()
+            info_meta_id = store_infoMeta.id
+# 
+    for i , m in h2dict.items():
+        for j , l in m.items():
+            main_info = Main_Info.objects.create(keyh3 = m , valueh3 = '' , keyh4 = l ,  valueh4 = '' , Main_key=info_meta_id)
+            main_info.save()
+            print(l)
+    # foundH2 = False
+    # foundH3 = False
+    # foundH4 = False
+    
+    # headingValue = ''
+    # headingValue3 = ''
+    # headingValue4 = ''
+
+
+    # for para in asdf:
+    #     if para.name =='a':
+    #         for link in linkdi:
+    #             if link == para.get_text():
+    #                 linkdict[link] = para['href']
+        # print(linkdict)
         # h2
-        if para.name=='h2':
-            headingValue = para.get_text()
-            about[headingValue] = ''
-            foundH2 = True
-        #h3
-        if para.name == 'h3':
-            headingValue3 = para.get_text()
-            about[headingValue3]  = ''
-            foundH3 = True  
-
-        # h4
-        if para.name == 'h4':
-            headingValue4 = para.get_text()
-            about[headingValue4] = ''
-            foundH4 = True    
-        if para.name=='p':
-            if foundH2:
-                about[headingValue] += para.get_text()
-            if foundH3:
-                about[headingValue3] += para.get_text()
-            if foundH4:
-                about[headingValue4] += para.get_text() 
-    dict_dictt_about = {}
-    for dictt_k ,dictt_v in dictt.items():
-        dict_dictt_about[dictt_k] = dictt_v
-    for about_k ,about_v in about.items():
-        dict_dictt_about[about_k] = about_v
-    print(dict_dictt_about)
-    for ddk , ddv in dict_dictt_about.items():
+        # if para.name=='h2':
+        #     headingValue = para.get_text()
+        #     about[headingValue] = ''
+        #     foundH2 = True
 
 
-    # dict_dictt_about_keys = {'dictt_keys' :dictt.keys()  , 'about_keys' : about.keys()}
-    # # print(dict_dictt_about_keys.values())
-    # dict_dictt_about_values = {'dictt_values' :dictt.values()  , 'about_values' : about.values()}
-        information_id2 = Information.objects.get(id=information_id)
-        store_infoMeta = Info_Meta.objects.create(meta_key = ddk, meta_value = ddv , info_key = information_id2)   
-        store_infoMeta.save()
+
+        # #h3
+        # if para.name == 'h3':
+        #     headingValue3 = para.get_text()
+        #     about[headingValue3]  = ''
+        #     foundH3 = True  
+
+
+
+        # # h4
+        # if para.name == 'h4':
+        #     headingValue4 = para.get_text()
+        #     about[headingValue4] = ''
+        #     foundH4 = True  
+
+
+            
+              
+        # if para.name=='p' :
+        #     if found2d:
+        #         h2dict[key] += para.get_text() 
+        #         print('h2' , para.get_text())
+ 
+
+
+
+
+        #     if found3d:
+        #         h2dict[keyh2] += para.get_text()
+        #         print('h3' , para.get_text())
+
+
+
+        #     if found4d:
+        #         h2dict[key][keyh2][keyh3] += para.get_text() 
+        #         print('h4' , para.get_text())
+
+    # dict_dictt_about = {}
+
+
+    # for dictt_k ,dictt_v in dictt.items():
+    #     dict_dictt_about[dictt_k] = dictt_v
+
+    # for about_k ,about_v in about.items():
+    #     dict_dictt_about[about_k] = about_v
+
+
+    # information_id2 = Information.objects.get(id=information_id)
+    # for ddk , ddv in dict_dictt_about.items():
+    #     store_infoMeta = Info_Meta.objects.create(meta_key = ddk, meta_value = ddv , info_key = information_id2)   
+    #     store_infoMeta.save()
     print('NInformation_META Store Done')
 
-    # context = {'result4' : about}
-    # return render(request , 'results.html' , context)
+
+def func(req):
+    return render(req ,"try.html")

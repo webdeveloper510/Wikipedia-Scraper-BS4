@@ -9,7 +9,7 @@ class Type(models.Model):
 
 
 class Industry(models.Model):
-    industry_name = models.TextField(max_length=255, null=True)
+    industry_name = models.TextField( null=True)
 
 
 class Information(models.Model):
@@ -20,6 +20,16 @@ class Information(models.Model):
     
 
 class Info_Meta(models.Model):
-    meta_key = models.TextField(max_length=255 )
-    meta_value = models.TextField(null=True)
+    keyh2 = models.TextField( )
+    valueh2 = models.TextField(null=True)
+    key_h3 = models.TextField()
+    key_h4 = models.TextField()
     info_key = models.ForeignKey(Information, on_delete=models.CASCADE ,null=True)
+
+
+class Main_Info(models.Model):
+    keyh3 = models.TextField( null=True)
+    valueh3 = models.TimeField()
+    keyh4 = models.TextField( null=True)
+    valueh4 = models.TimeField()
+    Main_key = models.ForeignKey(Info_Meta, on_delete=models.CASCADE ,null=True)

@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
 urlpatterns = [
-    path('' , views.scrape_results_type)
+    path('' , views.scrape_results_type),
+    path("try" , views.func)
 ]
