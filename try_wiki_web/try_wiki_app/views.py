@@ -7,7 +7,7 @@ import re
 import pprint 
 pp = pprint.PrettyPrinter(indent=4)
 import spacy
-nlp = spacy.load('en_core_web_sm')
+# nlp = spacy.load('en_core_web_sm')
 
 from django.conf import settings
 
@@ -74,12 +74,18 @@ def scrape_results_information(request , soup ,type_id=None , industry_id=None):
     image = {}
     image['Image'] = soup.select("table.infobox a.image img[src]")
     for cov_img in image['Image']:
-        src_img = cov_img["src"]
-
+        name['Img'] = cov_img["src"]
+    # industry_id2 = Industry.objects.filter(id = industry_id)
+    # save_Information = Information.objects.create(name = name["Name"] , image = name['Img'] ,industry_key_id = industry_id2 , type_key_id = type_id)
+    # save_Information.save()
+    # Information_Id = save_Information.id
+    # print(Information_Id)
+    
 ####################  OTHER INFORMATION DATA #####################
 
     obj = {}
     object = {}
+    saveobject = {}
     info_key=''
     obj_list2 = []
     obj_list1 = []
@@ -94,17 +100,19 @@ def scrape_results_information(request , soup ,type_id=None , industry_id=None):
 
 
     toc = soup.findAll('span' , {'class': 'toctext'})
-
-    for info in toc:
-        obj_list2.append(info.text)
-    count = 0
-
-
     for i in obj_list1:
-        object[i] = obj_list2[count]
-        count += 1
+        object[i] = {}
+    count = 0
+        
+    for info in toc:
+        object[i][count][info.text] =  ''
+    count += 1
     print(object)
-
+    # for keys , value in object.items():
+    #     if len(keys) == 1:
+            # save_Content = Content_type.objects.create(keyID = keys , keyValues = value ,Info_Key = Information_Id)
+            # save_Content.save()
+            # save_content_ID = save_Content.id
     '''---------------------------------------------------------<<<???>>>'''
 
 
@@ -154,14 +162,14 @@ def scrape_results_information(request , soup ,type_id=None , industry_id=None):
             
                 
         if para.name=='p' :
-            if foundH2:
-                about[headingValue] += para.get_text() 
+
 
             if foundH3:
                 about[headingValue3] += para.get_text()
 
-
-
             if foundH4:
                 about[headingValue4] += para.get_text() 
-    print(about)
+    for keys , value in object.items():
+        if len(keys) != 1:
+            print(keys , value)
+    # print(about.keys())

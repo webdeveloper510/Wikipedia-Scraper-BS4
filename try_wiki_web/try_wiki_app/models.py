@@ -19,17 +19,15 @@ class Information(models.Model):
     image = models.TextField()
     
 
-class Info_Meta(models.Model):
-    keyh2 = models.TextField( )
-    valueh2 = models.TextField(null=True)
-    key_h3 = models.TextField()
-    key_h4 = models.TextField()
-    info_key = models.ForeignKey(Information, on_delete=models.CASCADE ,null=True)
 
-
-class Main_Info(models.Model):
-    keyh3 = models.TextField( null=True)
-    valueh3 = models.TimeField()
-    keyh4 = models.TextField( null=True)
-    valueh4 = models.TimeField()
-    Main_key = models.ForeignKey(Info_Meta, on_delete=models.CASCADE ,null=True)
+class Content_type(models.Model):
+    keyID = models.IntegerField()
+    keyValue = models.TextField()
+    Info_Key = models.ForeignKey(Information , on_delete=models.CASCADE , null=True)
+    
+class SubContent_type(models.Model):
+    Sub_keyID = models.IntegerField()
+    Sub_keyValue = models.TextField()
+    SubKey_Description = models.TextField()
+    level_Info = models.IntegerField()
+    Content_Key = models.ForeignKey(Content_type , on_delete=models.CASCADE ,null=True)
