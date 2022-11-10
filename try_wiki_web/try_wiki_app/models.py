@@ -21,12 +21,12 @@ class Information(models.Model):
 
 
 class Content_type(models.Model):
-    keyID = models.IntegerField()
+    keyID = models.CharField(max_length=255)
     keyValue = models.TextField()
     Info_Key = models.ForeignKey(Information , on_delete=models.CASCADE , null=True)
     
 class SubContent_type(models.Model):
-    Sub_keyID = models.IntegerField()
+    Sub_keyID = models.CharField(max_length=255)
     Sub_keyValue = models.TextField()
     SubKey_Description = models.TextField()
     level_Info = models.IntegerField()

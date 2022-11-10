@@ -6,8 +6,7 @@ from .models import *
 import re
 import pprint 
 pp = pprint.PrettyPrinter(indent=4)
-import spacy
-# nlp = spacy.load('en_core_web_sm')
+from collections import defaultdict
 
 from django.conf import settings
 
@@ -35,7 +34,6 @@ def gettypeIndustryAndSave(labels,data,keyword,model):
         industry.industry_name = name
         industry.save()
         id = industry.id
-
     return id
     
 # Main Function
@@ -75,22 +73,30 @@ def scrape_results_information(request , soup ,type_id=None , industry_id=None):
     image['Image'] = soup.select("table.infobox a.image img[src]")
     for cov_img in image['Image']:
         name['Img'] = cov_img["src"]
-    # industry_id2 = Industry.objects.filter(id = industry_id)
-    # save_Information = Information.objects.create(name = name["Name"] , image = name['Img'] ,industry_key_id = industry_id2 , type_key_id = type_id)
-    # save_Information.save()
-    # Information_Id = save_Information.id
-    # print(Information_Id)
-    
-####################  OTHER INFORMATION DATA #####################
+        type_id2 = Type.objects.filter(id = type_id).values('id')
+        industry_id2 = Type.objects.filter(id = industry_id).values('id')
+    Information_sa = Information.objects.create(name = name["Name"] , image = name['Img'] ,industry_key = None, type_key = None)
+    Information_sa.save()
+    Information_Id = Information_sa.id
+    print("Information_Id===================>" , industry_id2)
+    print("Information_Id===================>" , type_id2)
+    scrape_results_Content_sub(request , soup , Information_Id=None)
+
+
+
+
+
+
+def scrape_results_Content_sub(request , soup , Information_Id=None):
 
     obj = {}
-    object = {}
+    object = dict()
     saveobject = {}
     info_key=''
     obj_list2 = []
     obj_list1 = []
 
-
+    i = ''
     toc2 = soup.findAll('span' , {'class': 'tocnumber'})
 
     for filter_data in toc2:
@@ -100,76 +106,59 @@ def scrape_results_information(request , soup ,type_id=None , industry_id=None):
 
 
     toc = soup.findAll('span' , {'class': 'toctext'})
-    for i in obj_list1:
-        object[i] = {}
-    count = 0
-        
     for info in toc:
-        object[i][count][info.text] =  ''
-    count += 1
-    print(object)
-    # for keys , value in object.items():
-    #     if len(keys) == 1:
-            # save_Content = Content_type.objects.create(keyID = keys , keyValues = value ,Info_Key = Information_Id)
-            # save_Content.save()
-            # save_content_ID = save_Content.id
-    '''---------------------------------------------------------<<<???>>>'''
+        obj_list2.append(info.text)
+    count = 0
+    for i in obj_list1:
+        object[i] = obj_list2[count]
+
+        count += 1
+    for keys , value in object.items():
+        if len(keys)==1:
+            save_Content = Content_type.objects.create(keyID = keys , keyValue = value ,Info_Key = None)
+            save_Content.save()
+            save_content_ID = save_Content.id
+    # '''---------------------------------------------------------<<<???>>>'''
 
 
 
-
-    foundH2 = False
-    foundH3 = False
-    foundH4 = False
-    
-    headingValue = ''
     headingValue3 = ''
     headingValue4 = ''
-
+    foundH3 = False
+    foundH4 = False
     dict3 = {}
 
     about = {}
-
     dict3['Try'] = soup.select(".mw-parser-output >  h4 , h3 , h2 , p ")
     for para in dict3['Try']:
 
-    
-
-
-        if para.name=='h2':
-            headingValue = para.get_text()
-            about[headingValue] = ''
-            foundH2 = True
-
-
-
-
         #h3
         if para.name == 'h3':
+            
             headingValue3 = para.get_text()
             about[headingValue3]  = ''
             foundH3 = True  
-
-
 
         # h4
         if para.name == 'h4':
             headingValue4 = para.get_text()
             about[headingValue4] = ''
             foundH4 = True  
-
-
-            
-                
+           
         if para.name=='p' :
-
-
             if foundH3:
                 about[headingValue3] += para.get_text()
 
             if foundH4:
                 about[headingValue4] += para.get_text() 
-    for keys , value in object.items():
-        if len(keys) != 1:
-            print(keys , value)
-    # print(about.keys())
+    
+    for keyss , values  in about.items():
+        for it , k in object.items():
+            if keyss == k:
+                print('i-----------> ' , it ,  keyss == k)
+
+                level_length = len(it.split("_"))
+                print(level_length)
+                SubContent_sa = SubContent_type.objects.create(Sub_keyID = it , Sub_keyValue = keyss , SubKey_Description = values  , level_Info =level_length ,Content_Key = None)
+                SubContent_sa.save()
+                print("done")
