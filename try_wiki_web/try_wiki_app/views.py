@@ -3,10 +3,8 @@ from django.conf import settings
 from django.shortcuts import render
 import requests
 from .models import *
-import re
 import pprint 
 pp = pprint.PrettyPrinter(indent=4)
-from collections import defaultdict
 
 from django.conf import settings
 
@@ -62,7 +60,7 @@ def scrape_results_type( request ):
 
 
 
-def scrape_results_information(request , soup ,type_id=None , industry_id=None):
+def scrape_results_information(request , soup ,typeId=None , industryId=None):
 ####################  NAME AND IMAGE ############################
     name = {}
     name['Name'] = soup.select("#firstHeading > span ")
@@ -73,21 +71,25 @@ def scrape_results_information(request , soup ,type_id=None , industry_id=None):
     image['Image'] = soup.select("table.infobox a.image img[src]")
     for cov_img in image['Image']:
         name['Img'] = cov_img["src"]
-        type_id2 = Type.objects.filter(id = type_id).values('id')
-        industry_id2 = Type.objects.filter(id = industry_id).values('id')
+        type_id2 = Type.objects.filter(id = typeId).values('id')
+        industry_id2 = Type.objects.filter(id = industryId).values('id')
     Information_sa = Information.objects.create(name = name["Name"] , image = name['Img'] ,industry_key = None, type_key = None)
-    Information_sa.save()
+    if Information.objects.get(name=name["Name"]):
+        print("ok")
+    else:
+        Information_sa.save()
     Information_Id = Information_sa.id
-    print("Information_Id===================>" , industry_id2)
-    print("Information_Id===================>" , type_id2)
-    scrape_results_Content_sub(request , soup , Information_Id=None)
+    print("Information_Id===================>" , Information_Id)
+    print("Industry===================>" , industry_id2)
+    print("Type===================>" , type_id2)
+    scrape_results_Content_sub(request , soup , Information_Id)
 
 
 
 
 
 
-def scrape_results_Content_sub(request , soup , Information_Id=None):
+def scrape_results_Content_sub(request , soup , Information_Id):
 
     obj = {}
     object = dict()
@@ -113,9 +115,12 @@ def scrape_results_Content_sub(request , soup , Information_Id=None):
         object[i] = obj_list2[count]
 
         count += 1
+    Info_ID = Information.objects.get(id = Information_Id)
+    print("Information_Id===================>" , Info_ID)
+
     for keys , value in object.items():
         if len(keys)==1:
-            save_Content = Content_type.objects.create(keyID = keys , keyValue = value ,Info_Key = None)
+            save_Content = Content_type.objects.create(keyID = keys , keyValue = value ,Info_Key = Info_ID)
             save_Content.save()
             save_content_ID = save_Content.id
     # '''---------------------------------------------------------<<<???>>>'''
@@ -151,6 +156,7 @@ def scrape_results_Content_sub(request , soup , Information_Id=None):
 
             if foundH4:
                 about[headingValue4] += para.get_text() 
+    Content_ID = Content_type.objects.get(id = save_content_ID)
     
     for keyss , values  in about.items():
         for it , k in object.items():
@@ -159,6 +165,6 @@ def scrape_results_Content_sub(request , soup , Information_Id=None):
 
                 level_length = len(it.split("_"))
                 print(level_length)
-                SubContent_sa = SubContent_type.objects.create(Sub_keyID = it , Sub_keyValue = keyss , SubKey_Description = values  , level_Info =level_length ,Content_Key = None)
+                SubContent_sa = SubContent_type.objects.create(Sub_keyID = it , Sub_keyValue = keyss , SubKey_Description = values  , level_Info =level_length ,Content_Key = Content_ID)
                 SubContent_sa.save()
                 print("done")
